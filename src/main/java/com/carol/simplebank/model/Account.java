@@ -15,7 +15,7 @@ public class Account {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToOne private User owner;
+  @OneToOne private User user;
 
   private BigDecimal amount;
 }
