@@ -81,4 +81,8 @@ public class UserService implements UserDetailsService {
     List<User> users = userRepository.findAll();
     return UserGetDto.toDtos(users);
   }
+
+  public User findById(Long id) throws ResourceNotFoundException {
+    return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found."));
+  }
 }

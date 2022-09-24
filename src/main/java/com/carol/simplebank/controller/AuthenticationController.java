@@ -3,7 +3,6 @@ package com.carol.simplebank.controller;
 import com.carol.simplebank.dto.LoginForm;
 import com.carol.simplebank.dto.TokenDto;
 import com.carol.simplebank.service.TokenService;
-import com.carol.simplebank.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,11 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.validation.Valid;
 
+import static com.carol.simplebank.util.Constants.AUTHORIZATION_TYPE;
+
 @Controller
 @RequestMapping("/auth")
 public class AuthenticationController {
-
-  public static final String TOKEN_TYPE = "Bearer";
 
   @Autowired private TokenService tokenService;
 
@@ -36,7 +35,7 @@ public class AuthenticationController {
     try {
       Authentication authentication = authenticationManager.authenticate(loginData);
       String token = tokenService.generateToken(authentication);
-      return ResponseEntity.ok(new TokenDto(token, TOKEN_TYPE));
+      return ResponseEntity.ok(new TokenDto(token, AUTHORIZATION_TYPE));
     } catch (AuthenticationException e) {
       return ResponseEntity.badRequest().build();
     }

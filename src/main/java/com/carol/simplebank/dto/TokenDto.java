@@ -12,5 +12,5 @@ import lombok.Setter;
 public class TokenDto {
 
   private String token;
-  private String tokenType;
+  private String authorizationType;
 }
