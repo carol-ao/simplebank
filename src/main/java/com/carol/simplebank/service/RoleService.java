@@ -13,6 +13,6 @@ public class RoleService {
     private RoleRepository roleRepository;
 
     public Role findById(Long id) throws ResourceNotFoundException {
-        return roleRepository.findById(id).orElseThrow(() ->  new ResourceNotFoundException("Role id "+ id +"not found in database"));
+        return roleRepository.findById(id).orElseThrow(() ->  new ResourceNotFoundException("Role id "+ id +" not found."));
     }
 }
