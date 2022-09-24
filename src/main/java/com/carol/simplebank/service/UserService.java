@@ -17,23 +17,23 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+// TODO: create interfaces!!!
 
 @Service
 public class UserService implements UserDetailsService {
 
-  @Autowired
-  private UserRepository userRepository;
+  @Autowired private UserRepository userRepository;
 
-  @Autowired
-  private RoleService roleService;
+  @Autowired private RoleService roleService;
 
-  @Autowired
-  private BCryptPasswordEncoder bCryptPasswordEncoder;
+  @Autowired private BCryptPasswordEncoder bCryptPasswordEncoder;
 
   public UserGetDto save(UserPostDto userPostDto)
-          throws ResourceNotFoundException, DuplicateUserException, UserWithNoRolesException {
+      throws ResourceNotFoundException, DuplicateUserException, UserWithNoRolesException {
 
     Set<Role> roles = new HashSet<>();
     for (RoleDto roleDto : userPostDto.getRoles()) {
@@ -70,7 +70,15 @@ public class UserService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    User user = userRepository.findByCpf(username).orElseThrow( () -> new UsernameNotFoundException("user not found."));
+    User user =
+        userRepository
+            .findByCpf(username)
+            .orElseThrow(() -> new UsernameNotFoundException("user not found."));
     return user;
+  }
+
+  public List<UserGetDto> findAll() {
+    List<User> users = userRepository.findAll();
+    return UserGetDto.toDtos(users);
   }
 }

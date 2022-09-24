@@ -5,7 +5,9 @@ import com.carol.simplebank.model.User;
 import lombok.*;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -28,5 +30,17 @@ public class UserGetDto {
         .cpf(user.getCpf())
         .roleDtos(Role.toDtos(user.getRoles()))
         .build();
+  }
+
+  public static List<UserGetDto> toDtos(List<User> users) {
+    return users.stream()
+        .map(
+            user ->
+                UserGetDto.builder()
+                    .name(user.getName())
+                    .cpf(user.getCpf())
+                    .roleDtos(Role.toDtos(user.getRoles()))
+                    .build())
+        .collect(Collectors.toList());
   }
 }
