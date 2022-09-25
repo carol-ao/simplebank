@@ -9,8 +9,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TokenDto {
+public class AuthenticationDto {
 
+  private Long userId;
   private String token;
   private String authorizationType;
 }

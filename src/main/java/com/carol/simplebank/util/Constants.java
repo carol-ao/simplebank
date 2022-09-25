@@ -10,7 +10,6 @@ public class Constants {
 
     public static final String ROLE_OPERATOR = "OPERATOR";
 
-    public static final double MAX_AMOUNT_ALLOWED_PER_DEPOSIT = 2000.00;
+    public static final double MAX_AMOUNT_ALLOWED_PER_OPERATION = 2000.00;
 
-    public static final double MAX_AMOUNT_ALLOWED_PER_TRANSFER = 2000.00;
 }

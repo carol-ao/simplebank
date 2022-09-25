@@ -2,45 +2,74 @@ package com.carol.simplebank.model;
 
 import com.carol.simplebank.exceptions.InvalidDepositException;
 import com.carol.simplebank.exceptions.InvalidTransferException;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
+import javax.persistence.*;
 
-import static com.carol.simplebank.util.Constants.MAX_AMOUNT_ALLOWED_PER_DEPOSIT;
-import static com.carol.simplebank.util.Constants.MAX_AMOUNT_ALLOWED_PER_TRANSFER;
+import static com.carol.simplebank.util.Constants.MAX_AMOUNT_ALLOWED_PER_OPERATION;
 
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
-public class Account extends BasicAccount {
+public class Account {
 
-  @Override
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  protected Long id;
+
+  @ManyToOne protected User user;
+
+  protected double balance; // TODO: change to BigDecimal
+
   public void deposit(double amount) throws InvalidDepositException {
 
     if (amount < 0) {
-      throw new InvalidDepositException("The deposit amount must be non-negative");
+      throw new InvalidDepositException("The deposit amount must be non-negative.");
     }
-    if (amount > MAX_AMOUNT_ALLOWED_PER_DEPOSIT) {
+    if (amount > MAX_AMOUNT_ALLOWED_PER_OPERATION) {
       throw new InvalidDepositException(
-          "For this account, the deposit amount must not be greater than "
+          "The deposit amount must not be greater than "
               .concat("R$")
-              .concat(String.valueOf(MAX_AMOUNT_ALLOWED_PER_DEPOSIT))
+              .concat(String.valueOf(MAX_AMOUNT_ALLOWED_PER_OPERATION))
               .concat("."));
     }
+
+    this.balance += amount;
   }
 
-  @Override
   public void transfer(double amount) throws InvalidTransferException {
     if (amount < 0) {
-      throw new InvalidTransferException("The deposit amount must be non-negative");
-    }
-    if (amount > MAX_AMOUNT_ALLOWED_PER_TRANSFER) {
       throw new InvalidTransferException(
-          "For this account, the transfered amount must not be greater than "
-              .concat("R$")
-              .concat(String.valueOf(MAX_AMOUNT_ALLOWED_PER_TRANSFER))
-              .concat("."));
+          "The transferred amount into an account must be non-negative");
     }
+    if (amount > MAX_AMOUNT_ALLOWED_PER_OPERATION) {
+      throw new InvalidTransferException(
+          "The transferred amount from an account "
+              + "to another cannot result in negative balance.");
+    }
+    this.balance -= amount;
+  }
 
-    if (this.balance - amount < 0) {
-      // TODO: continue here
-    }
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User user) {
+    this.user = user;
+  }
+
+  public double getBalance() {
+    return balance;
   }
 }

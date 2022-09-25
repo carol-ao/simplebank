@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class UserGetDto {
 
+  private Long id;
+
   private String name;
 
   private String cpf;
@@ -26,6 +28,7 @@ public class UserGetDto {
 
   public static UserGetDto toDto(User user) {
     return UserGetDto.builder()
+        .id(user.getId())
         .name(user.getName())
         .cpf(user.getCpf())
         .roleDtos(Role.toDtos(user.getRoles()))
@@ -37,6 +40,7 @@ public class UserGetDto {
         .map(
             user ->
                 UserGetDto.builder()
+                    .id(user.getId())
                     .name(user.getName())
                     .cpf(user.getCpf())
                     .roleDtos(Role.toDtos(user.getRoles()))
