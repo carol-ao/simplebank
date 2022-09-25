@@ -53,6 +53,23 @@ public class Account {
     this.balance -= amount;
   }
 
+  public void receive(double amount) throws InvalidTransferException {
+
+    if (amount < 0) {
+      throw new InvalidTransferException("The amount received in a transfer must be non-negative.");
+    }
+    if (amount > MAX_AMOUNT_ALLOWED_PER_OPERATION) {
+      throw new InvalidTransferException(
+              "The amount received in a transfer must not be greater than "
+                      .concat("R$")
+                      .concat(String.valueOf(MAX_AMOUNT_ALLOWED_PER_OPERATION))
+                      .concat("."));
+    }
+
+    this.balance += amount;
+  }
+
+
   public Long getId() {
     return id;
   }

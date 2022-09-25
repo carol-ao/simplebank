@@ -43,7 +43,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
   private void authenticateUser(String token) throws ResourceNotFoundException {
     Long userId = tokenService.getUserIdFromToken(token);
-    User user = userService.findById(userId);
+    User user = userService.findEntityById(userId);
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
     SecurityContextHolder.getContext().setAuthentication(authentication);

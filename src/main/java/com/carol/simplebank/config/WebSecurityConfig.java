@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import static com.carol.simplebank.util.Constants.ROLE_ADMIN;
+import static com.carol.simplebank.util.Constants.ROLE_OPERATOR;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -37,12 +38,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
   protected void configure(HttpSecurity http) throws Exception {
     http.authorizeRequests()
         .antMatchers("/users/**").hasRole(ROLE_ADMIN)
+        .antMatchers("/accounts").hasRole(ROLE_ADMIN)
+        .antMatchers("/accounts/user-operations").hasAnyRole(ROLE_ADMIN,ROLE_OPERATOR)
         .antMatchers(HttpMethod.POST, "/auth").permitAll()
         .anyRequest().authenticated()
-        .and().csrf().disable()
-        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and().addFilterBefore(
-            new TokenAuthenticationFilter(tokenService, userService), UsernamePasswordAuthenticationFilter.class);
+        .and().csrf()
+        .disable().sessionManagement()
+        .sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().addFilterBefore(
+                new TokenAuthenticationFilter(tokenService, userService), UsernamePasswordAuthenticationFilter.class);
   }
 
   @Override
