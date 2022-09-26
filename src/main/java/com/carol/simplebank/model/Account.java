@@ -27,14 +27,16 @@ public class Account {
   public void deposit(double amount) throws InvalidDepositException {
 
     if (amount < 0) {
-      throw new InvalidDepositException("The deposit amount must be non-negative.");
+      throw new InvalidDepositException(
+          "The deposit amount must be non-negative. accountId:"
+              .concat(id != null ? id.toString() : "null"));
     }
     if (amount > MAX_AMOUNT_ALLOWED_PER_OPERATION) {
       throw new InvalidDepositException(
           "The deposit amount must not be greater than "
               .concat("R$")
               .concat(String.valueOf(MAX_AMOUNT_ALLOWED_PER_OPERATION))
-              .concat("."));
+              .concat(". accountId:".concat(id != null ? id.toString() : "null")));
     }
 
     this.balance += amount;
@@ -43,12 +45,15 @@ public class Account {
   public void transfer(double amount) throws InvalidTransferException {
     if (amount < 0) {
       throw new InvalidTransferException(
-          "The transferred amount into an account must be non-negative");
+          "The transferred amount must be non-negative. accountId:"
+              .concat(id != null ? id.toString() : "null"));
     }
-    if (amount > MAX_AMOUNT_ALLOWED_PER_OPERATION) {
+
+    if (balance - amount < 0) {
       throw new InvalidTransferException(
           "The transferred amount from an account "
-              + "to another cannot result in negative balance.");
+              + "to another cannot result in negative balance. accountId:"
+                  .concat(id != null ? id.toString() : "null"));
     }
     this.balance -= amount;
   }
@@ -56,19 +61,13 @@ public class Account {
   public void receive(double amount) throws InvalidTransferException {
 
     if (amount < 0) {
-      throw new InvalidTransferException("The amount received in a transfer must be non-negative.");
-    }
-    if (amount > MAX_AMOUNT_ALLOWED_PER_OPERATION) {
       throw new InvalidTransferException(
-              "The amount received in a transfer must not be greater than "
-                      .concat("R$")
-                      .concat(String.valueOf(MAX_AMOUNT_ALLOWED_PER_OPERATION))
-                      .concat("."));
+          "The amount received in a transfer must be non-negative. accountId:"
+              .concat(id != null ? id.toString() : "null"));
     }
 
     this.balance += amount;
   }
-
 
   public Long getId() {
     return id;

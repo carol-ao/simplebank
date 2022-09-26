@@ -23,7 +23,10 @@ public class AccountService {
         accountRepository
             .findByUserId(userId)
             .orElseThrow(
-                () -> new ResourceNotFoundException("No account for this user was found."));
+                () ->
+                    new ResourceNotFoundException(
+                        "No account for this user was found. userId:"
+                            .concat(String.valueOf(userId))));
 
     return new AccountDto(account);
   }
@@ -33,7 +36,8 @@ public class AccountService {
     User user = userService.findEntityById(userId);
     if (accountRepository.existsByUserId(userId)) {
       throw new DuplicateAccountException(
-          "User already has an account and cannot open a second one.");
+          "User already has an account and cannot open a second one. userId:"
+              .concat(String.valueOf(userId)));
     }
     Account newAccount = Account.builder().user(user).build();
     return new AccountDto(accountRepository.save(newAccount));
@@ -44,7 +48,10 @@ public class AccountService {
         accountRepository
             .findByUserId(userId)
             .orElseThrow(
-                () -> new ResourceNotFoundException("No account was found for this user."));
+                () ->
+                    new ResourceNotFoundException(
+                        "No account was found for this user. userId:"
+                            .concat(String.valueOf(userId))));
     return new AccountDto(account);
   }
 
@@ -54,7 +61,10 @@ public class AccountService {
         accountRepository
             .findByUserId(user.getId())
             .orElseThrow(
-                () -> new ResourceNotFoundException("No account was found for this user."));
+                () ->
+                    new ResourceNotFoundException(
+                        "No account was found for this user. User with name:"
+                            .concat(String.valueOf(userName))));
     return new AccountDto(account);
   }
 
@@ -66,7 +76,8 @@ public class AccountService {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException(
-                        "No account was found with the account id given for deposit operation."));
+                        "No account was found with the account id given for deposit operation. accountId:"
+                            .concat(String.valueOf(id))));
     account.deposit(sum);
     account = accountRepository.save(account);
     return new AccountDto(account);
@@ -81,14 +92,16 @@ public class AccountService {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException(
-                        "No account was found with the account id given to transfer from (origin account)."));
+                        "No account was found with the account id given to transfer from (origin account). accountId:"
+                            .concat(String.valueOf(originAccountId))));
     Account destinationAccount =
         accountRepository
             .findById(destinationAccountId)
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException(
-                        "No account was found with the account id given to transfer to (destination account)."));
+                        "No account was found with the account id given to transfer to (destination account). accountId:"
+                            .concat(String.valueOf(destinationAccountId))));
 
     originAccount.transfer(amount);
     destinationAccount.receive(amount);
