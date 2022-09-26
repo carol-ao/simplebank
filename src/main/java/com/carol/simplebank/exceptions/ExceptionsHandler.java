@@ -47,12 +47,11 @@ public class ExceptionsHandler {
     @ExceptionHandler({
       DuplicateAccountException.class,
       DuplicateUserException.class,
-      IllegalOperationException.class,
       InvalidDepositException.class,
       InvalidTransferException.class,
       UserWithNoRolesException.class
     })
-    public ResponseEntity<StandardError> operationIllegal(
+    public ResponseEntity<StandardError> illegalOperation(
         Exception e, HttpServletRequest httpServletRequest) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN)
           .body(

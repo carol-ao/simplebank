@@ -4,7 +4,6 @@ import com.carol.simplebank.dto.InsertOrUpdateUserDto;
 import com.carol.simplebank.dto.RoleDto;
 import com.carol.simplebank.dto.UserDto;
 import com.carol.simplebank.exceptions.DuplicateUserException;
-import com.carol.simplebank.exceptions.IllegalOperationException;
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.exceptions.UserWithNoRolesException;
 import com.carol.simplebank.model.Account;
@@ -18,8 +17,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -42,12 +41,7 @@ public class UserService implements UserDetailsService {
   public UserDto save(InsertOrUpdateUserDto insertOrUpdateUserDto)
       throws ResourceNotFoundException, DuplicateUserException, UserWithNoRolesException {
 
-    Set<Role> roles = new HashSet<>();
-    for (RoleDto roleDto : insertOrUpdateUserDto.getRoles()) {
-      roles.add(roleService.findById(roleDto.getId()));
-    }
-
-    validateUserHasAtLeastOneRole(roles);
+    Set<Role> roles = validateAndGetNewUserRoles(insertOrUpdateUserDto.getRoles());
     validateUserIsNotAlreadyRegistered(insertOrUpdateUserDto.getCpf());
 
     User user =
@@ -59,6 +53,28 @@ public class UserService implements UserDetailsService {
             .build();
 
     return UserDto.toDto(userRepository.save(user));
+  }
+
+  private Set<Role> validateAndGetNewUserRoles(Set<RoleDto> roleDtos)
+      throws UserWithNoRolesException, ResourceNotFoundException {
+    Set<Role> roles = new HashSet<>();
+    if (roleDtos != null) {
+      for (RoleDto roleDto : roleDtos) {
+        roles.add(roleService.findById(roleDto.getId()));
+      }
+    } else {
+      throw new UserWithNoRolesException(
+          "No valid roles found. Add at least one valid role to the user before insertion.");
+    }
+    return roles;
+  }
+
+  private void validateUserIsNotAlreadyRegistered(String cpf) throws DuplicateUserException {
+    Optional<User> existingUser = userRepository.findByCpf(cpf);
+    if (existingUser.isPresent()) {
+      throw new DuplicateUserException(
+          "A user with this CPF is already registered. cpf:".concat(cpf));
+    }
   }
 
   @Transactional
@@ -79,15 +95,10 @@ public class UserService implements UserDetailsService {
   }
 
   @Transactional
-  public void delete(Long id) throws ResourceNotFoundException, IllegalOperationException {
+  public void delete(Long id) throws ResourceNotFoundException {
     User user = findEntityById(id);
     Account account = accountRepository.findByUserId(id).orElse(null);
     if (account != null) {
-      if (account.getBalance() > 0.0) {
-        throw new IllegalOperationException(
-            "The user account is not empty and cannot be deleted. Empty the account first. accountId:"
-                .concat(account.getId().toString()));
-      }
       accountRepository.delete(account);
     }
     userRepository.delete(user);
@@ -135,21 +146,6 @@ public class UserService implements UserDetailsService {
                     new ResourceNotFoundException(
                         "User not found. id:".concat(String.valueOf(id))));
     return user;
-  }
-
-  private void validateUserHasAtLeastOneRole(Set<Role> roles) throws UserWithNoRolesException {
-    if (roles.isEmpty()) {
-      throw new UserWithNoRolesException(
-          "No valid roles found. Add at least one valid role to the user before insertion.");
-    }
-  }
-
-  private void validateUserIsNotAlreadyRegistered(String cpf) throws DuplicateUserException {
-    Optional<User> existingUser = userRepository.findByCpf(cpf);
-    if (existingUser.isPresent()) {
-      throw new DuplicateUserException(
-          "A user with this CPF is already registered. cpf:".concat(cpf));
-    }
   }
 
   @Override

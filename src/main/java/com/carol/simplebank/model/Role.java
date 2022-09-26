@@ -10,6 +10,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,5 +29,18 @@ public class Role {
 
   public static Set<RoleDto> toDtos(Set<Role> roles) {
     return roles.stream().map(role -> new RoleDto(role.id,role.authority)).collect(Collectors.toSet());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Role role = (Role) o;
+    return Objects.equals(id, role.id) && Objects.equals(authority, role.authority);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, authority);
   }
 }

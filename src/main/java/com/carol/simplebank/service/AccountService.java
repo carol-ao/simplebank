@@ -11,6 +11,8 @@ import com.carol.simplebank.repositories.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+
 @Service
 public class AccountService {
 
@@ -31,6 +33,7 @@ public class AccountService {
     return new AccountDto(account);
   }
 
+  @Transactional
   public AccountDto openAccount(Long userId)
       throws ResourceNotFoundException, DuplicateAccountException {
     User user = userService.findEntityById(userId);
@@ -68,6 +71,7 @@ public class AccountService {
     return new AccountDto(account);
   }
 
+  @Transactional
   public AccountDto deposit(Long id, double sum)
       throws ResourceNotFoundException, InvalidDepositException {
     Account account =
@@ -83,6 +87,7 @@ public class AccountService {
     return new AccountDto(account);
   }
 
+  @Transactional
   public AccountDto transfer(Long originAccountId, Long destinationAccountId, double amount)
       throws ResourceNotFoundException, InvalidTransferException {
 

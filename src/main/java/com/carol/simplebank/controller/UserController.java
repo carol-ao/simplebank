@@ -3,7 +3,6 @@ package com.carol.simplebank.controller;
 import com.carol.simplebank.dto.InsertOrUpdateUserDto;
 import com.carol.simplebank.dto.UserDto;
 import com.carol.simplebank.exceptions.DuplicateUserException;
-import com.carol.simplebank.exceptions.IllegalOperationException;
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.exceptions.UserWithNoRolesException;
 import com.carol.simplebank.service.UserService;
@@ -27,6 +26,7 @@ public class UserController {
     return new ResponseEntity(userService.save(insertOrUpdateUserDto), HttpStatus.CREATED);
   }
 
+  //TODO: change to return page
   @GetMapping
   public ResponseEntity<List<UserDto>> findAll() {
     return new ResponseEntity(userService.findAll(), HttpStatus.OK);
@@ -54,7 +54,7 @@ public class UserController {
 
   @DeleteMapping("/{id}")
   public ResponseEntity delete(@PathVariable Long id)
-      throws ResourceNotFoundException, IllegalOperationException {
+      throws ResourceNotFoundException {
     userService.delete(id);
     return ResponseEntity.ok().build();
   }

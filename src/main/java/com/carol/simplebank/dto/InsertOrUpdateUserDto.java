@@ -3,6 +3,7 @@ package com.carol.simplebank.dto;
 import com.carol.simplebank.model.Role;
 import com.carol.simplebank.model.User;
 import lombok.*;
+import org.hibernate.validator.constraints.br.CPF;
 
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +21,7 @@ public class InsertOrUpdateUserDto {
 
   private String name;
 
+  @CPF
   private String cpf;
 
   private String password;
