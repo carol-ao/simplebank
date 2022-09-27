@@ -28,7 +28,7 @@ public class AuthenticationService {
             User user = getUserFromAuthentication(authentication);
             String token = tokenService.generateToken(authentication, user.getId());
             return new AuthenticationDto(user.getId(), token, AUTHORIZATION_TYPE);
-        } catch (AuthenticationException e) {
+        } catch (RuntimeException e) {
             return null;
         }
     }

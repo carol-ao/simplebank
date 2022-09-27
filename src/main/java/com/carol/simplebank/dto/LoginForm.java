@@ -1,13 +1,13 @@
 package com.carol.simplebank.dto;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class LoginForm {
 
     private String username;
