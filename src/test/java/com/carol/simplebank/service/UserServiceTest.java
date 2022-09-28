@@ -6,21 +6,30 @@ import com.carol.simplebank.dto.UserDto;
 import com.carol.simplebank.exceptions.DuplicateUserException;
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.exceptions.UserWithNoRolesException;
+import com.carol.simplebank.factory.AccountFactory;
+import com.carol.simplebank.factory.UserFactory;
 import com.carol.simplebank.model.Account;
 import com.carol.simplebank.model.Role;
 import com.carol.simplebank.model.User;
 import com.carol.simplebank.repositories.AccountRepository;
 import com.carol.simplebank.repositories.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @ExtendWith(SpringExtension.class)
 public class UserServiceTest {
@@ -35,11 +44,12 @@ public class UserServiceTest {
 
   @Mock private BCryptPasswordEncoder bCryptPasswordEncoder;
 
+
   @Test
   public void mustSaveNewUserAndReturnDtoWhenValidUserDataGiven()
       throws UserWithNoRolesException, ResourceNotFoundException, DuplicateUserException {
 
-    InsertOrUpdateUserDto insertOrUpdateUserDto = getValidUserData();
+    InsertOrUpdateUserDto insertOrUpdateUserDto = UserFactory.getValidInsertOrUpdateUserDto();
     Set<Role> roles = RoleDto.toRoles(insertOrUpdateUserDto.getRoles());
     User user =
         User.builder()
@@ -65,11 +75,16 @@ public class UserServiceTest {
   }
 
   @Test
-  public void mustThrowUserWithNoRolesExceptionWhenNoRoleIsGivenToAssignToNewUser() {
-    InsertOrUpdateUserDto insertOrUpdateUserDto = getUserDataWithNoRolesToSaveNewUser();
+  public void mustThrowUserWithNoRolesExceptionWhenNoRoleIsGivenToAssignToNewUser()
+      throws ResourceNotFoundException {
+    InsertOrUpdateUserDto insertOrUpdateUserDto = UserFactory.getValidInsertOrUpdateUserDto();
+    insertOrUpdateUserDto.setRoles(null);
+
     Exception exception =
         Assertions.assertThrows(
             UserWithNoRolesException.class, () -> userService.save(insertOrUpdateUserDto));
+    Mockito.verify(roleService, Mockito.times(0)).findById(Mockito.any());
+
     Assertions.assertEquals(
         "No valid roles found. Add at least one valid role to the user before insertion.",
         exception.getMessage());
@@ -78,7 +93,7 @@ public class UserServiceTest {
   @Test
   public void
       mostThrowDuplicateUserExceptionWhenNewUserSaveAttemptedAndUserWithGivenCpfAlreadyExists() {
-    InsertOrUpdateUserDto insertOrUpdateUserDto = getValidUserData();
+    InsertOrUpdateUserDto insertOrUpdateUserDto = UserFactory.getValidInsertOrUpdateUserDto();
     Set<Role> roles = RoleDto.toRoles(insertOrUpdateUserDto.getRoles());
     User user =
         User.builder()
@@ -104,14 +119,16 @@ public class UserServiceTest {
   public void mustUpdateUserNameAndPasswordAndReturnDtoWhenValidUserDataIsGivenToPatch()
       throws ResourceNotFoundException {
 
-    InsertOrUpdateUserDto insertOrUpdateUserDto = getValidUserData();
+    InsertOrUpdateUserDto insertOrUpdateUserDto = UserFactory.getValidInsertOrUpdateUserDto();
     Set<Role> roles = RoleDto.toRoles(insertOrUpdateUserDto.getRoles());
+    String newName = insertOrUpdateUserDto.getName();
+    String newPassword = "newEncryptedPassword";
     String oldName = "Emma Darcy";
-    String oldPassword = "encrypted_password";
+    String oldPassword = "oldEncryptedPassword";
 
     User user =
         User.builder()
-            .id(1L)
+            .id(insertOrUpdateUserDto.getId())
             .name(oldName)
             .cpf(insertOrUpdateUserDto.getCpf())
             .password(oldPassword)
@@ -126,17 +143,22 @@ public class UserServiceTest {
 
     UserDto userDto = userService.patch(insertOrUpdateUserDto);
 
+
     Assertions.assertEquals(insertOrUpdateUserDto.getId(), userDto.getId());
     Assertions.assertEquals(insertOrUpdateUserDto.getCpf(), userDto.getCpf());
-    Assertions.assertEquals(insertOrUpdateUserDto.getName(), userDto.getName());
-    Assertions.assertFalse(oldPassword.equals(user.getPassword()));
+
+    Assertions.assertEquals(newName, userDto.getName());
+    Assertions.assertNotEquals(oldName, userDto.getName());
+
+    Assertions.assertEquals(newPassword, user.getPassword());
+    Assertions.assertNotEquals( oldPassword, user.getPassword());
   }
 
   @Test
   public void mustDeleteUserAndAccountWhenDeleteValidUserWithAnAccountAttempted()
       throws ResourceNotFoundException {
-    User user = getUser1();
-    Account account = getEmptyAccountForUser(user);
+    User user = UserFactory.getUser1();
+    Account account = AccountFactory.getEmptyAccountForUser1();
 
     Mockito.when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
     Mockito.when(accountRepository.findByUserId(user.getId())).thenReturn(Optional.of(account));
@@ -150,7 +172,7 @@ public class UserServiceTest {
   @Test
   public void mustDeleteUserWhenDeleteValidUserWithoutAnAccountAttempted()
       throws ResourceNotFoundException {
-    User user = getUser1();
+    User user = UserFactory.getUser1();
 
     Mockito.when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
     Mockito.when(accountRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
@@ -162,7 +184,7 @@ public class UserServiceTest {
 
   @Test
   public void mustReturnListOfUserDtoWithAllUsersData() {
-    List<User> users = Arrays.asList(getUser1(), getUser2());
+    List<User> users = Arrays.asList(UserFactory.getUser1(), UserFactory.getUser2());
 
     Mockito.when(userRepository.findAll()).thenReturn(users);
 
@@ -183,7 +205,7 @@ public class UserServiceTest {
   public void mustReturnUserDtoWithUserDataWhenFindByIdAttemptedWithExistingUser()
       throws ResourceNotFoundException {
 
-    User user = getUser1();
+    User user = UserFactory.getUser1();
 
     Mockito.when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
 
@@ -197,49 +219,5 @@ public class UserServiceTest {
   }
 
   // TODO: tests for findByCpf, findByUserName, findEntityById, loadUserByUsername
-  // TODO: use factory desing pattern for dtos and entities
 
-  private InsertOrUpdateUserDto getUserDataWithNoRolesToSaveNewUser() {
-
-    return InsertOrUpdateUserDto.builder()
-        .password("123")
-        .cpf("052.468.324-73")
-        .name("Milly Alcock")
-        .build();
-  }
-
-  private InsertOrUpdateUserDto getValidUserData() {
-
-    return InsertOrUpdateUserDto.builder()
-        .id(1L)
-        .password("123")
-        .cpf("052.468.324-73")
-        .name("Milly Alcock")
-        .roles(new HashSet<RoleDto>(Collections.singleton(RoleDto.builder().id(1L).build())))
-        .build();
-  }
-
-  private User getUser1() {
-    return User.builder()
-        .id(1L)
-        .password("123")
-        .cpf("052.468.324-73")
-        .name("Milly Alcock")
-        .roles(new HashSet<Role>(Collections.singleton(Role.builder().id(1L).build())))
-        .build();
-  }
-
-  private User getUser2() {
-    return User.builder()
-        .id(1L)
-        .password("456")
-        .cpf("856.758.704-23")
-        .name("Matt Smith")
-        .roles(new HashSet<Role>(Collections.singleton(Role.builder().id(1L).build())))
-        .build();
-  }
-
-  private Account getEmptyAccountForUser(User user) {
-    return Account.builder().id(1L).user(user).balance(0).build();
-  }
 }

@@ -2,7 +2,7 @@ package com.carol.simplebank.service;
 
 import com.carol.simplebank.dto.AuthenticationDto;
 import com.carol.simplebank.dto.LoginForm;
-import com.carol.simplebank.model.Role;
+import com.carol.simplebank.factory.UserFactory;
 import com.carol.simplebank.model.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,8 +34,8 @@ public class AuthenticationServiceTest {
   @Test
   public void mustAuthenticateUserWhenValidUserCredentialsGiven() {
 
-    LoginForm loginForm = getValidUserLoginForm();
-    User userWithEncryptedPassword = getUserWithEncryptedPassword();
+    LoginForm loginForm = UserFactory.getValidUserLoginFormForUser1();
+    User userWithEncryptedPassword = UserFactory.getUser1();
     Authentication authentication = getAuthenticatedUser(userWithEncryptedPassword);
     String token = getValidToken();
 
@@ -48,6 +48,10 @@ public class AuthenticationServiceTest {
 
     AuthenticationDto authenticationDto = authenticationService.authenticateUser(loginForm);
 
+    Mockito.verify(authenticationManager, Mockito.times(1))
+        .authenticate(Mockito.any(UsernamePasswordAuthenticationToken.class));
+    Mockito.verify(tokenService, Mockito.times(1))
+        .generateToken(Mockito.any(Authentication.class), Mockito.anyLong());
     Assertions.assertEquals(userWithEncryptedPassword.getId(), authenticationDto.getUserId());
     Assertions.assertEquals(token, authenticationDto.getToken());
     Assertions.assertEquals(AUTHORIZATION_TYPE, authenticationDto.getAuthorizationType());
@@ -56,7 +60,7 @@ public class AuthenticationServiceTest {
   @Test
   public void mustReturnNullWhenAuthenticationFails() {
 
-    LoginForm loginForm = getValidUserLoginForm();
+    LoginForm loginForm = UserFactory.getValidUserLoginFormForUser1();
 
     Mockito.when(
             authenticationManager.authenticate(
@@ -66,11 +70,6 @@ public class AuthenticationServiceTest {
     AuthenticationDto authenticationDto = authenticationService.authenticateUser(loginForm);
 
     Assertions.assertNull(authenticationDto);
-  }
-
-  private LoginForm getValidUserLoginForm() {
-
-    return LoginForm.builder().password("123").username("John Snow").build();
   }
 
   private UsernamePasswordAuthenticationToken getAuthenticatedUser(User userWithEncryptedPassword) {
@@ -84,19 +83,5 @@ public class AuthenticationServiceTest {
 
   private String getValidToken() {
     return "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJTaW1wbGViYW5rIEFQSSIsInN1YiI6IjEiLCJpYXQiOjE2NjQzMDIzODQsImV4cCI6MTY2NDM4ODc4NH0.h9cjH5LMozfXTHBd3VAzYja3Eacqd65HHkmNeGlQrtk";
-  }
-
-  private User getUserWithEncryptedPassword() {
-    return User.builder()
-        .id(1L)
-        .password("encryptedPassord")
-        .cpf("052.468.324-73")
-        .name("Milly Alcock")
-        .roles(
-            new HashSet<Role>(
-                Arrays.asList(
-                    Role.builder().id(1L).authority("ROLE_ADMIN").build(),
-                    Role.builder().id(2L).authority("ROLE_OPERATOR").build())))
-        .build();
   }
 }

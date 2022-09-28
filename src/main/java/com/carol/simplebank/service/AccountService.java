@@ -9,6 +9,8 @@ import com.carol.simplebank.model.Account;
 import com.carol.simplebank.model.User;
 import com.carol.simplebank.repositories.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -19,19 +21,6 @@ public class AccountService {
   @Autowired private AccountRepository accountRepository;
   @Autowired private UserService userService;
 
-  public AccountDto findByUserId(Long userId) throws ResourceNotFoundException {
-
-    Account account =
-        accountRepository
-            .findByUserId(userId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "No account for this user was found. userId:"
-                            .concat(String.valueOf(userId))));
-
-    return new AccountDto(account);
-  }
 
   @Transactional
   public AccountDto openAccount(Long userId)
@@ -46,19 +35,38 @@ public class AccountService {
     return new AccountDto(accountRepository.save(newAccount));
   }
 
-  public AccountDto findUserAccount(Long userId) throws ResourceNotFoundException {
+  public AccountDto findById(Long id) throws ResourceNotFoundException {
+    Account account =
+            accountRepository
+                    .findById(id)
+                    .orElseThrow(
+                            () ->
+                                    new ResourceNotFoundException(
+                                            "No account was found. Id:"
+                                                    .concat(String.valueOf(id))));
+    return new AccountDto(account);
+  }
+
+
+  public AccountDto consultAccount() throws ResourceNotFoundException {
+    User user = getAccountOwner();
     Account account =
         accountRepository
-            .findByUserId(userId)
+            .findByUserId(user.getId())
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException(
                         "No account was found for this user. userId:"
-                            .concat(String.valueOf(userId))));
+                            .concat(String.valueOf(user.getId()))));
     return new AccountDto(account);
   }
 
-  public AccountDto findUserAccountByUserName(String userName) throws ResourceNotFoundException {
+  private User getAccountOwner() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return (User) authentication.getPrincipal();
+  }
+
+  public AccountDto findAccountByUserName(String userName) throws ResourceNotFoundException {
     User user = userService.findByUserName(userName);
     Account account =
         accountRepository
@@ -115,4 +123,5 @@ public class AccountService {
 
     return new AccountDto(originAccount);
   }
+
 }

@@ -1,6 +1,7 @@
 package com.carol.simplebank.service;
 
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
+import com.carol.simplebank.factory.RoleFactory;
 import com.carol.simplebank.model.Role;
 import com.carol.simplebank.repositories.RoleRepository;
 import org.junit.jupiter.api.Assertions;
@@ -23,7 +24,7 @@ public class RoleServiceTest {
   @Test
   public void mustReturnRoleWhenValidRoleIdGivenToSearchRole() throws ResourceNotFoundException {
 
-    Role role = getValidRole();
+    Role role = RoleFactory.getAdminRole();
 
     Mockito.when(roleRepository.findById(role.getId())).thenReturn(Optional.of(role));
 
@@ -32,7 +33,4 @@ public class RoleServiceTest {
     Assertions.assertEquals(role, roleFound);
   }
 
-  private Role getValidRole() {
-    return Role.builder().id(1L).authority("ROLE_ADMIN").build();
-  }
 }

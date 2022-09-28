@@ -27,13 +27,18 @@ public class AccountController {
   @GetMapping(params = "userName")
   public ResponseEntity<AccountDto> findUserAccountByUserName(
       @RequestParam("userName") String userName) throws ResourceNotFoundException {
-    return ResponseEntity.ok().body(accountService.findUserAccountByUserName(userName));
+    return ResponseEntity.ok().body(accountService.findAccountByUserName(userName));
   }
 
-  @GetMapping("/user-operations/find")
-  public ResponseEntity<AccountDto> findUserAccount(@RequestParam("userId") Long userId)
+  @GetMapping(params = "{id}")
+  public ResponseEntity<AccountDto> findAccountById(@RequestParam("id") Long id)
       throws ResourceNotFoundException {
-    return ResponseEntity.ok().body(accountService.findUserAccount(userId));
+    return ResponseEntity.ok().body(accountService.findById(id));
+  }
+
+  @GetMapping(path = "/user-operations/consult")
+  public ResponseEntity<AccountDto> ConsultAccount() throws ResourceNotFoundException {
+    return ResponseEntity.ok().body(accountService.consultAccount());
   }
 
   @PatchMapping("/user-operations/deposit")

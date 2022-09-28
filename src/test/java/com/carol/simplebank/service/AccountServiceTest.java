@@ -5,21 +5,32 @@ import com.carol.simplebank.exceptions.DuplicateAccountException;
 import com.carol.simplebank.exceptions.InvalidDepositException;
 import com.carol.simplebank.exceptions.InvalidTransferException;
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
+import com.carol.simplebank.factory.AccountFactory;
+import com.carol.simplebank.factory.UserFactory;
 import com.carol.simplebank.model.Account;
 import com.carol.simplebank.model.Role;
 import com.carol.simplebank.model.User;
 import com.carol.simplebank.repositories.AccountRepository;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+
 
 @ExtendWith(SpringExtension.class)
 public class AccountServiceTest {
@@ -30,15 +41,25 @@ public class AccountServiceTest {
 
   @Mock private UserService userService;
 
+  @Mock private Authentication authentication;
+
+  @Mock private SecurityContext securityContext;
+
+  @BeforeEach
+  public void setUp() {
+    Mockito.when(securityContext.getAuthentication()).thenReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);  }
+
   @Test
   public void mustOpenAccountWhenUserValidAndUserHasNoAccount()
       throws ResourceNotFoundException, DuplicateAccountException {
 
-    User user = getUser1();
+    User user = UserFactory.getUser1();
 
     Mockito.when(userService.findEntityById(user.getId())).thenReturn(user);
     Mockito.when(accountRepository.existsByUserId(user.getId())).thenReturn(false);
-    Mockito.when(accountRepository.save(Mockito.any(Account.class))).thenReturn(getEmptyAccount());
+    Mockito.when(accountRepository.save(Mockito.any(Account.class)))
+        .thenReturn(AccountFactory.getEmptyAccountForUser1());
 
     AccountDto accountDto = accountService.openAccount(user.getId());
 
@@ -49,9 +70,9 @@ public class AccountServiceTest {
 
   @Test
   public void mustThrowDuplicateAccountExceptionWhenUserValidAndUserAlreadyHasAnAccount()
-      throws ResourceNotFoundException, DuplicateAccountException {
+      throws ResourceNotFoundException {
 
-    User user = getUser1();
+    User user = UserFactory.getUser1();
 
     Mockito.when(userService.findEntityById(user.getId())).thenReturn(user);
     Mockito.when(accountRepository.existsByUserId(user.getId())).thenReturn(true);
@@ -67,50 +88,17 @@ public class AccountServiceTest {
   }
 
   @Test
-  public void mustReturnAccountDtoWhenAccountExistsForUserIdGiven()
+  public void mustReturnAccountDtoWhenAccountSearchedByAuthenticatedOwnerWithValidAccount()
       throws ResourceNotFoundException {
 
-    User user = getUser1();
-    Account account = getAccountWithSmallValueBalance(user);
+    User user = UserFactory.getUser1();
+    Account account = AccountFactory.getAccountWithBigValueBalanceForUser1();
     AccountDto expectedAccountDto = new AccountDto(account);
 
     Mockito.when(accountRepository.findByUserId(user.getId())).thenReturn(Optional.of(account));
+    Mockito.when(authentication.getPrincipal()).thenReturn(UserFactory.getUser1());
 
-    AccountDto accountDto = accountService.findUserAccount(user.getId());
-
-    Assertions.assertEquals(expectedAccountDto.getId(), accountDto.getId());
-    Assertions.assertEquals(expectedAccountDto.getUserId(), accountDto.getUserId());
-    Assertions.assertEquals(expectedAccountDto.getBalance(), accountDto.getBalance());
-  }
-
-  @Test
-  public void mustThrowResourceNotFoundExceptionWhenAccountNotFoundInFindUserAccountMethod() {
-
-    Long userId = 1L;
-
-    Mockito.when(accountRepository.findByUserId(userId)).thenReturn(Optional.empty());
-
-    Exception exception =
-        Assertions.assertThrows(
-            ResourceNotFoundException.class, () -> accountService.findUserAccount(userId));
-
-    Assertions.assertEquals(
-        "No account was found for this user. userId:".concat(String.valueOf(userId)),
-        exception.getMessage());
-  }
-
-  @Test
-  public void mustReturnAccountDtoWhenAccountExistsForUserNameGiven()
-      throws ResourceNotFoundException {
-
-    User user = getUser1();
-    Account account = getAccountWithSmallValueBalance(user);
-    AccountDto expectedAccountDto = new AccountDto(account);
-
-    Mockito.when(userService.findByUserName(user.getName())).thenReturn(user);
-    Mockito.when(accountRepository.findByUserId(user.getId())).thenReturn(Optional.of(account));
-
-    AccountDto accountDto = accountService.findUserAccountByUserName(user.getName());
+    AccountDto accountDto = accountService.consultAccount();
 
     Assertions.assertEquals(expectedAccountDto.getId(), accountDto.getId());
     Assertions.assertEquals(expectedAccountDto.getUserId(), accountDto.getUserId());
@@ -119,17 +107,85 @@ public class AccountServiceTest {
 
   @Test
   public void
-      mustThrowResourceNotFoundExceptionWhenAccountNotFoundInFindUserAccounByUserNameMethod()
+      mustThrowResourceNotFoundExceptionWhenAuthenticatedOwnerTriesToConsultAccountButHasNone() {
+
+    Long userId = 1L;
+
+    Mockito.when(accountRepository.findByUserId(userId)).thenReturn(Optional.empty());
+    Mockito.when(authentication.getPrincipal()).thenReturn(UserFactory.getUser1());
+    Exception exception =
+        Assertions.assertThrows(
+            ResourceNotFoundException.class, () -> accountService.consultAccount());
+
+    Assertions.assertEquals(
+        "No account was found for this user. userId:".concat(String.valueOf(userId)),
+        exception.getMessage());
+  }
+
+  @Test
+  public void mustReturnAccountDtoWhenAccountSearchedByIdAndAccountIsFound()
+      throws ResourceNotFoundException {
+
+    Account account = AccountFactory.getAccountWithBigValueBalanceForUser1();
+    AccountDto expectedAccountDto = new AccountDto(account);
+
+    Mockito.when(accountRepository.findById(account.getId())).thenReturn(Optional.of(account));
+
+    AccountDto accountDto = accountService.findById(account.getId());
+
+    Assertions.assertEquals(expectedAccountDto.getId(), accountDto.getId());
+    Assertions.assertEquals(expectedAccountDto.getUserId(), accountDto.getUserId());
+    Assertions.assertEquals(expectedAccountDto.getBalance(), accountDto.getBalance());
+  }
+
+  @Test
+  public void mustThrowResourceNotFoundExceptionWhenAuthenticatedUserTriesToConsultButUserNotFoundInDatabase() {
+
+    Long userId = 1L;
+
+    Mockito.when(accountRepository.findByUserId(userId)).thenReturn(Optional.empty());
+    Mockito.when(authentication.getPrincipal()).thenReturn(UserFactory.getUser1());
+
+    Exception exception =
+        Assertions.assertThrows(
+            ResourceNotFoundException.class, () -> accountService.consultAccount());
+
+    Assertions.assertEquals(
+        "No account was found for this user. userId:".concat(String.valueOf(userId)),
+        exception.getMessage());
+  }
+
+  @Test
+  public void mustReturnAccountDtoWhenAccountSearchedByNameOfUserAndAccountIsFound()
+      throws ResourceNotFoundException {
+
+    User user = UserFactory.getUser1();
+    Account account = AccountFactory.getAccountWithBigValueBalanceForUser1();
+    AccountDto expectedAccountDto = new AccountDto(account);
+
+    Mockito.when(userService.findByUserName(user.getName())).thenReturn(user);
+    Mockito.when(accountRepository.findByUserId(user.getId())).thenReturn(Optional.of(account));
+
+    AccountDto accountDto = accountService.findAccountByUserName(user.getName());
+
+    Assertions.assertEquals(expectedAccountDto.getId(), accountDto.getId());
+    Assertions.assertEquals(expectedAccountDto.getUserId(), accountDto.getUserId());
+    Assertions.assertEquals(expectedAccountDto.getBalance(), accountDto.getBalance());
+  }
+
+  @Test
+  public void
+      mustThrowResourceNotFoundExceptionWhenAccountNotFoundInFindUserAccountByUserNameMethod()
           throws ResourceNotFoundException {
 
-    User user = getUser1();
+    User user = UserFactory.getUser1();
 
     Mockito.when(userService.findByUserName(user.getName())).thenReturn(user);
     Mockito.when(accountRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
     Exception exception =
         Assertions.assertThrows(
             ResourceNotFoundException.class,
-            () -> accountService.findUserAccountByUserName(user.getName()));
+            () -> accountService.findAccountByUserName(user.getName()));
 
     Assertions.assertEquals(
         "No account was found for this user. User with name:"
@@ -141,7 +197,7 @@ public class AccountServiceTest {
   public void mustMakeDepositWhenAccountExistsInDepositAttempt()
       throws InvalidDepositException, ResourceNotFoundException {
 
-    Account account = getAccountWithBigValueBalance(getUser1());
+    Account account = AccountFactory.getAccountWithBigValueBalanceForUser1();
     double depositedAmount = 100.00;
 
     Mockito.when(accountRepository.findById(account.getId())).thenReturn(Optional.of(account));
@@ -158,26 +214,23 @@ public class AccountServiceTest {
   @Test
   public void mustThrowResourceNotFoundExceptionWhenAccountDoesntExistInDepositAttempt() {
 
-    Account account = getAccountWithBigValueBalance(getUser1());
     double depositedAmount = 100.00;
 
-    Mockito.when(accountRepository.findById(account.getId())).thenReturn(Optional.empty());
+    Mockito.when(accountRepository.findById(1L)).thenReturn(Optional.empty());
     Exception exception =
         Assertions.assertThrows(
-            ResourceNotFoundException.class,
-            () -> accountService.deposit(account.getId(), depositedAmount));
+            ResourceNotFoundException.class, () -> accountService.deposit(1L, depositedAmount));
     Assertions.assertEquals(
-        "No account was found with the account id given for deposit operation. accountId:"
-            .concat(account.getId().toString()),
+        "No account was found with the account id given for deposit operation. accountId:" + 1L,
         exception.getMessage());
   }
 
   @Test
-  public void mustTrasferMoneyWhenBothAccountsExistsInTransferAttempt()
+  public void mustTransferMoneyWhenBothAccountsExistsInTransferAttempt()
       throws InvalidTransferException, ResourceNotFoundException {
 
-    Account originAccount = getAccountWithBigValueBalance(getUser1());
-    Account destinationAccount = getAccountWithSmallValueBalance(getUser2());
+    Account originAccount = AccountFactory.getAccountWithBigValueBalanceForUser1();
+    Account destinationAccount = AccountFactory.getAccountWithSmallValueBalanceForUser2();
     double transferredAmount = 100.00;
 
     Mockito.when(accountRepository.findById(originAccount.getId()))
@@ -202,11 +255,11 @@ public class AccountServiceTest {
   @Test
   public void mustThrowResourceNotFoundExceptionWhenOriginAccountDoesntExistInTransferAttempt() {
 
-    Account originAccount = getAccountWithBigValueBalance(getUser1());
-    Account destinationAccount = getAccountWithSmallValueBalance(getUser2());
+    Account originAccount = Account.builder().id(0L).build(); // put tis in factory!!!!!
+    Account destinationAccount = AccountFactory.getAccountWithSmallValueBalanceForUser2();
     double transferredAmount = 100.00;
 
-    Mockito.when(accountRepository.findById(originAccount.getId())).thenReturn(Optional.empty());
+    Mockito.when(accountRepository.findById(0L)).thenReturn(Optional.empty());
     Mockito.when(accountRepository.findById(destinationAccount.getId()))
         .thenReturn(Optional.of(destinationAccount));
 
@@ -226,8 +279,8 @@ public class AccountServiceTest {
   public void
       mustThrowResourceNotFoundExceptionWhenDestinationAccountDoesntExistInTransferAttempt() {
 
-    Account originAccount = getAccountWithBigValueBalance(getUser1());
-    Account destinationAccount = getAccountWithSmallValueBalance(getUser2());
+    Account originAccount = AccountFactory.getAccountWithBigValueBalanceForUser1();
+    Account destinationAccount = AccountFactory.getAccountWithSmallValueBalanceForUser2();
     double transferredAmount = 100.00;
 
     Mockito.when(accountRepository.findById(originAccount.getId()))
@@ -247,35 +300,26 @@ public class AccountServiceTest {
         exception.getMessage());
   }
 
-  private User getUser1() {
+  private UsernamePasswordAuthenticationToken getAuthenticatedUser(User userWithEncryptedPassword) {
+
+    List<SimpleGrantedAuthority> simpleGrantedAuthorities =
+        Arrays.asList(
+            new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_ADMIN"));
+    return new UsernamePasswordAuthenticationToken(
+        userWithEncryptedPassword, null, new HashSet<>(simpleGrantedAuthorities));
+  }
+
+  private User getUserWithEncryptedPassword() {
     return User.builder()
         .id(1L)
-        .password("123")
+        .password("encryptedPassword")
         .cpf("052.468.324-73")
         .name("Milly Alcock")
-        .roles(new HashSet<Role>(Collections.singleton(Role.builder().id(1L).build())))
+        .roles(
+            new HashSet<>(
+                Arrays.asList(
+                    Role.builder().id(1L).authority("ROLE_ADMIN").build(),
+                    Role.builder().id(2L).authority("ROLE_OPERATOR").build())))
         .build();
-  }
-
-  private User getUser2() {
-    return User.builder()
-        .id(1L)
-        .password("456")
-        .cpf("856.758.704-23")
-        .name("Matt Smith")
-        .roles(new HashSet<Role>(Collections.singleton(Role.builder().id(1L).build())))
-        .build();
-  }
-
-  private Account getEmptyAccount() {
-    return Account.builder().id(1L).user(getUser1()).balance(0).build();
-  }
-
-  private Account getAccountWithBigValueBalance(User user) {
-    return Account.builder().id(1L).user(user).balance(2000.00).build();
-  }
-
-  private Account getAccountWithSmallValueBalance(User user) {
-    return Account.builder().id(2L).user(user).balance(1500.00).build();
   }
 }

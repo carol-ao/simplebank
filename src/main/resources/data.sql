@@ -1,0 +1,7 @@
+
+INSERT INTO ROLE(authority) VALUES('ROLE_ADMIN');
+INSERT INTO ROLE(authority) VALUES('ROLE_OPERATOR');
+
+INSERT INTO TB_USER(name, cpf, password) VALUES('Milly Alcock', '67761608059', '$2a$10$aeQFejYuTx3YolQksWdf7ehce9OZREHSePQvxnYgp6YbciHIB5C46');
+
+INSERT INTO USER_ROLE(tb_user_id,role_id) VALUES(1,1);
