@@ -1,18 +1,22 @@
 package com.carol.simplebank.controller;
 
+import com.carol.simplebank.controller.user.UserController;
 import com.carol.simplebank.dto.InsertOrUpdateUserDto;
 import com.carol.simplebank.dto.RoleDto;
 import com.carol.simplebank.dto.UserDto;
 import com.carol.simplebank.exceptions.DuplicateUserException;
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.exceptions.UserWithNoRolesException;
-import com.carol.simplebank.service.UserService;
+import com.carol.simplebank.service.user.UserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -47,16 +51,17 @@ public class UserControllerTest {
   }
 
   @Test
-  public void mustReturnListOfAllUsersInDatabaseAndStatusOk() {
+  public void mustReturnPageWithUsersInDatabaseAndStatusOk() {
 
     List<UserDto> userDtos = Arrays.asList(getValidUserDto(), getValidUserDto2());
 
-    Mockito.when(userService.findAll()).thenReturn(userDtos);
+    Pageable pageable = Pageable.ofSize(2);
+    Mockito.when(userService.findAll(pageable)).thenReturn(new PageImpl<UserDto>(userDtos));
 
-    ResponseEntity<List<UserDto>> response = userController.findAll();
+    ResponseEntity<Page<UserDto>> response = userController.findAll(pageable);
 
     Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
-    Assertions.assertTrue(response.getBody().containsAll(userDtos));
+    Assertions.assertTrue(response.getBody().getContent().containsAll(userDtos));
   }
 
   @Test

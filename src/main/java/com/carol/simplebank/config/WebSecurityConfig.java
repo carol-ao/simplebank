@@ -1,7 +1,7 @@
 package com.carol.simplebank.config;
 
-import com.carol.simplebank.service.TokenService;
-import com.carol.simplebank.service.UserService;
+import com.carol.simplebank.service.token.TokenService;
+import com.carol.simplebank.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -37,9 +37,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
   @Override
   protected void configure(HttpSecurity http) throws Exception {
     http.authorizeRequests()
-        .antMatchers("/users/**").hasRole(ROLE_ADMIN)
+        .antMatchers("/users").hasRole(ROLE_ADMIN)
         .antMatchers("/accounts").hasRole(ROLE_ADMIN)
-        .antMatchers("/accounts/user-operations").hasAnyRole(ROLE_ADMIN,ROLE_OPERATOR)
+        .antMatchers("/accounts/account-owner").hasAnyRole(ROLE_ADMIN,ROLE_OPERATOR)
         .antMatchers(HttpMethod.POST, "/auth").permitAll()
         .anyRequest().authenticated()
         .and().csrf()

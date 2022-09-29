@@ -1,5 +1,7 @@
 package com.carol.simplebank.util;
 
+import java.math.BigDecimal;
+
 public class Constants {
 
     private Constants() {};

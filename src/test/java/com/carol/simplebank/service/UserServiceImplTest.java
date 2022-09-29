@@ -6,23 +6,23 @@ import com.carol.simplebank.dto.UserDto;
 import com.carol.simplebank.exceptions.DuplicateUserException;
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.exceptions.UserWithNoRolesException;
-import com.carol.simplebank.factory.AccountFactory;
 import com.carol.simplebank.factory.UserFactory;
 import com.carol.simplebank.model.Account;
 import com.carol.simplebank.model.Role;
 import com.carol.simplebank.model.User;
 import com.carol.simplebank.repositories.AccountRepository;
 import com.carol.simplebank.repositories.UserRepository;
-import org.junit.jupiter.api.AfterEach;
+import com.carol.simplebank.service.role.RoleService;
+import com.carol.simplebank.service.user.UserServiceImpl;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -30,11 +30,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @ExtendWith(SpringExtension.class)
-public class UserServiceTest {
+public class UserServiceImplTest {
 
-  @InjectMocks private UserService userService;
+  @InjectMocks private UserServiceImpl userService;
 
   @Mock private UserRepository userRepository;
 
@@ -43,7 +44,6 @@ public class UserServiceTest {
   @Mock private AccountRepository accountRepository;
 
   @Mock private BCryptPasswordEncoder bCryptPasswordEncoder;
-
 
   @Test
   public void mustSaveNewUserAndReturnDtoWhenValidUserDataGiven()
@@ -143,7 +143,6 @@ public class UserServiceTest {
 
     UserDto userDto = userService.patch(insertOrUpdateUserDto);
 
-
     Assertions.assertEquals(insertOrUpdateUserDto.getId(), userDto.getId());
     Assertions.assertEquals(insertOrUpdateUserDto.getCpf(), userDto.getCpf());
 
@@ -151,17 +150,16 @@ public class UserServiceTest {
     Assertions.assertNotEquals(oldName, userDto.getName());
 
     Assertions.assertEquals(newPassword, user.getPassword());
-    Assertions.assertNotEquals( oldPassword, user.getPassword());
+    Assertions.assertNotEquals(oldPassword, user.getPassword());
   }
 
   @Test
   public void mustDeleteUserAndAccountWhenDeleteValidUserWithAnAccountAttempted()
       throws ResourceNotFoundException {
-    User user = UserFactory.getUser1();
-    Account account = AccountFactory.getEmptyAccountForUser1();
+    User user = UserFactory.getUser1WithAccount();
+    Account account = user.getAccount();
 
     Mockito.when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-    Mockito.when(accountRepository.findByUserId(user.getId())).thenReturn(Optional.of(account));
 
     userService.delete(user.getId());
 
@@ -183,22 +181,17 @@ public class UserServiceTest {
   }
 
   @Test
-  public void mustReturnListOfUserDtoWithAllUsersData() {
+  public void mustReturnPageOfUserDtoWithUserData() {
     List<User> users = Arrays.asList(UserFactory.getUser1(), UserFactory.getUser2());
+    Pageable pageable = Pageable.ofSize(2).withPage(0);
+    Page<User> page = new PageImpl<>(users, pageable, users.size());
+    Mockito.when(userRepository.findAll(pageable)).thenReturn(page);
 
-    Mockito.when(userRepository.findAll()).thenReturn(users);
+    Page<UserDto> userDtosPage = userService.findAll(pageable);
 
-    List<UserDto> userDtos = userService.findAll();
-
-    userDtos.forEach(
-        userDto -> {
-          Assertions.assertEquals(users.get(userDtos.indexOf(userDto)).getId(), userDto.getId());
-          Assertions.assertEquals(users.get(userDtos.indexOf(userDto)).getCpf(), userDto.getCpf());
-          Assertions.assertEquals(
-              users.get(userDtos.indexOf(userDto)).getName(), userDto.getName());
-          Set<Role> roles = RoleDto.toRoles(userDto.getRoleDtos());
-          Assertions.assertTrue(roles.containsAll(users.get(userDtos.indexOf(userDto)).getRoles()));
-        });
+    Assertions.assertEquals(2, userDtosPage.getSize());
+    Assertions.assertTrue(
+        userDtosPage.get().collect(Collectors.toList()).containsAll(UserDto.toDtos(users)));
   }
 
   @Test

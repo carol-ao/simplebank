@@ -1,18 +1,21 @@
-package com.carol.simplebank.controller;
+package com.carol.simplebank.controller.user;
 
 import com.carol.simplebank.dto.InsertOrUpdateUserDto;
 import com.carol.simplebank.dto.UserDto;
 import com.carol.simplebank.exceptions.DuplicateUserException;
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.exceptions.UserWithNoRolesException;
-import com.carol.simplebank.service.UserService;
+import com.carol.simplebank.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Controller
 @RequestMapping("/users")
@@ -20,16 +23,19 @@ public class UserController {
 
   @Autowired UserService userService;
 
+  //THESE ENDPOINTS ARE ONLY ACCESSED BY ADMINS
+
   @PostMapping
   public ResponseEntity<UserDto> save(@RequestBody InsertOrUpdateUserDto insertOrUpdateUserDto)
       throws UserWithNoRolesException, ResourceNotFoundException, DuplicateUserException {
     return new ResponseEntity(userService.save(insertOrUpdateUserDto), HttpStatus.CREATED);
   }
 
-  //TODO: change to return page
   @GetMapping
-  public ResponseEntity<List<UserDto>> findAll() {
-    return new ResponseEntity(userService.findAll(), HttpStatus.OK);
+  public ResponseEntity<Page<UserDto>> findAll(
+          @PageableDefault(sort = "id", direction = Sort.Direction.DESC, page = 0, size = 10)
+                                                         Pageable pageable) {
+    return new ResponseEntity(userService.findAll(pageable), HttpStatus.OK);
   }
 
   @GetMapping("/{id}")

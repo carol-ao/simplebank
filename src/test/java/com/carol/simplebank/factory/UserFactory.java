@@ -31,6 +31,17 @@ public class UserFactory {
                 .build();
     }
 
+    public static User getUser1WithAccount() {
+        return User.builder()
+                .id(1L)
+                .password("encrypted_password")
+                .cpf("052.468.324-73")
+                .name("Milly Alcock")
+                .account(AccountFactory.getAccountWithBigValueBalanceForUser1())
+                .roles(new HashSet<Role>(Collections.singleton(RoleFactory.getAdminRole())))
+                .build();
+    }
+
     public static InsertOrUpdateUserDto getValidInsertOrUpdateUserDto() {
 
         return InsertOrUpdateUserDto.builder()

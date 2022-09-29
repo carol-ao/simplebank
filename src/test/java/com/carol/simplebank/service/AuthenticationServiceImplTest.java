@@ -4,6 +4,8 @@ import com.carol.simplebank.dto.AuthenticationDto;
 import com.carol.simplebank.dto.LoginForm;
 import com.carol.simplebank.factory.UserFactory;
 import com.carol.simplebank.model.User;
+import com.carol.simplebank.service.authentication.AuthenticationServiceImpl;
+import com.carol.simplebank.service.token.TokenService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,13 +25,13 @@ import java.util.List;
 import static com.carol.simplebank.util.Constants.AUTHORIZATION_TYPE;
 
 @ExtendWith(SpringExtension.class)
-public class AuthenticationServiceTest {
+public class AuthenticationServiceImplTest {
 
   @Mock private AuthenticationManager authenticationManager;
 
   @Mock private TokenService tokenService;
 
-  @InjectMocks private AuthenticationService authenticationService;
+  @InjectMocks private AuthenticationServiceImpl authenticationServiceImpl;
 
   @Test
   public void mustAuthenticateUserWhenValidUserCredentialsGiven() {
@@ -46,7 +48,7 @@ public class AuthenticationServiceTest {
     Mockito.when(tokenService.generateToken(Mockito.any(Authentication.class), Mockito.anyLong()))
         .thenReturn(token);
 
-    AuthenticationDto authenticationDto = authenticationService.authenticateUser(loginForm);
+    AuthenticationDto authenticationDto = authenticationServiceImpl.authenticateUser(loginForm);
 
     Mockito.verify(authenticationManager, Mockito.times(1))
         .authenticate(Mockito.any(UsernamePasswordAuthenticationToken.class));
@@ -67,7 +69,7 @@ public class AuthenticationServiceTest {
                 Mockito.any(UsernamePasswordAuthenticationToken.class)))
         .thenThrow(RuntimeException.class);
 
-    AuthenticationDto authenticationDto = authenticationService.authenticateUser(loginForm);
+    AuthenticationDto authenticationDto = authenticationServiceImpl.authenticateUser(loginForm);
 
     Assertions.assertNull(authenticationDto);
   }

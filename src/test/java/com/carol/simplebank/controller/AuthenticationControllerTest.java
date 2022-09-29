@@ -1,8 +1,9 @@
 package com.carol.simplebank.controller;
 
+import com.carol.simplebank.controller.authentication.AuthenticationController;
 import com.carol.simplebank.dto.AuthenticationDto;
 import com.carol.simplebank.dto.LoginForm;
-import com.carol.simplebank.service.AuthenticationService;
+import com.carol.simplebank.service.authentication.AuthenticationServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +19,7 @@ import static com.carol.simplebank.util.Constants.AUTHORIZATION_TYPE;
 @ExtendWith(SpringExtension.class)
 public class AuthenticationControllerTest {
 
-  @Mock private AuthenticationService authenticationService;
+  @Mock private AuthenticationServiceImpl authenticationServiceImpl;
 
   @InjectMocks private AuthenticationController authenticationController;
 
@@ -30,7 +31,7 @@ public class AuthenticationControllerTest {
     AuthenticationDto authenticationDto =
         new AuthenticationDto(1L, "some_token", AUTHORIZATION_TYPE);
 
-    Mockito.when(authenticationService.authenticateUser(Mockito.any()))
+    Mockito.when(authenticationServiceImpl.authenticateUser(Mockito.any()))
         .thenReturn(authenticationDto);
 
     ResponseEntity<AuthenticationDto> response =
@@ -48,7 +49,7 @@ public class AuthenticationControllerTest {
 
     LoginForm invalidCredentialsLoginForm = new LoginForm("some_user", "wrong_password");
 
-    Mockito.when(authenticationService.authenticateUser(Mockito.any())).thenReturn(null);
+    Mockito.when(authenticationServiceImpl.authenticateUser(Mockito.any())).thenReturn(null);
 
     ResponseEntity<AuthenticationDto> response =
         authenticationController.authenticateUser(invalidCredentialsLoginForm);

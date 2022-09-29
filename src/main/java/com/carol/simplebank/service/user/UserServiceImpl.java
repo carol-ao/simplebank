@@ -1,4 +1,4 @@
-package com.carol.simplebank.service;
+package com.carol.simplebank.service.user;
 
 import com.carol.simplebank.dto.InsertOrUpdateUserDto;
 import com.carol.simplebank.dto.RoleDto;
@@ -11,23 +11,22 @@ import com.carol.simplebank.model.Role;
 import com.carol.simplebank.model.User;
 import com.carol.simplebank.repositories.AccountRepository;
 import com.carol.simplebank.repositories.UserRepository;
+import com.carol.simplebank.service.role.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-// TODO: create interfaces!!!
-
 @Service
-public class UserService implements UserDetailsService {
+public class UserServiceImpl implements UserService {
 
   @Autowired private UserRepository userRepository;
 
@@ -37,7 +36,7 @@ public class UserService implements UserDetailsService {
 
   @Autowired private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-  @Transactional
+  @Override
   public UserDto save(InsertOrUpdateUserDto insertOrUpdateUserDto)
       throws ResourceNotFoundException, DuplicateUserException, UserWithNoRolesException {
 
@@ -77,7 +76,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  @Transactional
+  @Override
   public UserDto patch(InsertOrUpdateUserDto insertOrUpdateUserDto)
       throws ResourceNotFoundException {
 
@@ -91,24 +90,27 @@ public class UserService implements UserDetailsService {
         .roleDtos(Role.toDtos(user.getRoles()))
         .name(user.getName())
         .cpf(user.getCpf())
+        .accountId(user.getAccount() != null ? user.getAccount().getId() : null)
         .build();
   }
 
-  @Transactional
+  @Override
   public void delete(Long id) throws ResourceNotFoundException {
     User user = findEntityById(id);
-    Account account = accountRepository.findByUserId(id).orElse(null);
+    Account account = user.getAccount();
     if (account != null) {
       accountRepository.delete(account);
     }
     userRepository.delete(user);
   }
 
-  public List<UserDto> findAll() {
-    List<User> users = userRepository.findAll();
-    return UserDto.toDtos(users);
+  @Override
+  public Page<UserDto> findAll(Pageable pageable) {
+    Page<User> users = userRepository.findAll(pageable);
+    return users.map(UserDto::toDto);
   }
 
+  @Override
   public UserDto findById(Long id) throws ResourceNotFoundException {
     User user =
         userRepository
@@ -121,6 +123,7 @@ public class UserService implements UserDetailsService {
     return UserDto.toDto(user);
   }
 
+  @Override
   public UserDto findByCpf(String cpf) throws ResourceNotFoundException {
     User user =
         userRepository
@@ -130,6 +133,7 @@ public class UserService implements UserDetailsService {
     return UserDto.toDto(user);
   }
 
+  @Override
   public User findByUserName(String userName) throws ResourceNotFoundException {
     return userRepository
         .findByName(userName)
@@ -137,6 +141,7 @@ public class UserService implements UserDetailsService {
             () -> new ResourceNotFoundException("user not found. username:".concat(userName)));
   }
 
+  @Override
   public User findEntityById(Long id) throws ResourceNotFoundException {
     User user =
         userRepository

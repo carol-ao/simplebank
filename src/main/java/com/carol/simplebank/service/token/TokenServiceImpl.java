@@ -1,4 +1,4 @@
-package com.carol.simplebank.service;
+package com.carol.simplebank.service.token;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 
 @Service
-public class TokenService {
+public class TokenServiceImpl implements TokenService{
 
   @Value("${jwt.duration}")
   private Integer jwtDuration;

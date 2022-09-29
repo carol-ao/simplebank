@@ -4,6 +4,7 @@ import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.factory.RoleFactory;
 import com.carol.simplebank.model.Role;
 import com.carol.simplebank.repositories.RoleRepository;
+import com.carol.simplebank.service.role.RoleServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,11 +16,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.Optional;
 
 @ExtendWith(SpringExtension.class)
-public class RoleServiceTest {
+public class RoleServiceImplTest {
 
   @Mock private RoleRepository roleRepository;
 
-  @InjectMocks private RoleService roleService;
+  @InjectMocks private RoleServiceImpl roleService;
 
   @Test
   public void mustReturnRoleWhenValidRoleIdGivenToSearchRole() throws ResourceNotFoundException {
@@ -32,5 +33,4 @@ public class RoleServiceTest {
 
     Assertions.assertEquals(role, roleFound);
   }
-
 }

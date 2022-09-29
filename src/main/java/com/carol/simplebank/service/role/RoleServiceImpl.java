@@ -1,4 +1,4 @@
-package com.carol.simplebank.service;
+package com.carol.simplebank.service.role;
 
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.model.Role;
@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class RoleService {
+public class RoleServiceImpl implements RoleService{
 
     @Autowired
     private RoleRepository roleRepository;

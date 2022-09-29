@@ -1,8 +1,9 @@
-package com.carol.simplebank.service;
+package com.carol.simplebank.service.authentication;
 
 import com.carol.simplebank.dto.LoginForm;
 import com.carol.simplebank.dto.AuthenticationDto;
 import com.carol.simplebank.model.User;
+import com.carol.simplebank.service.token.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,12 +13,13 @@ import org.springframework.stereotype.Service;
 import static com.carol.simplebank.util.Constants.AUTHORIZATION_TYPE;
 
 @Service
-public class AuthenticationService {
+public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Autowired private AuthenticationManager authenticationManager;
 
     @Autowired private TokenService tokenService;
 
+    @Override
     public AuthenticationDto authenticateUser(LoginForm loginForm) {
 
         UsernamePasswordAuthenticationToken loginData =

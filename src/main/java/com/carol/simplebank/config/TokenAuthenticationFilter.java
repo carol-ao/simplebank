@@ -2,8 +2,8 @@ package com.carol.simplebank.config;
 
 import com.carol.simplebank.exceptions.ResourceNotFoundException;
 import com.carol.simplebank.model.User;
-import com.carol.simplebank.service.TokenService;
-import com.carol.simplebank.service.UserService;
+import com.carol.simplebank.service.token.TokenService;
+import com.carol.simplebank.service.user.UserService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;

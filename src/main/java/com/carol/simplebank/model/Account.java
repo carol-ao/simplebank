@@ -20,9 +20,10 @@ public class Account {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   protected Long id;
 
-  @ManyToOne protected User user;
+  @OneToOne(fetch = FetchType.EAGER)
+  protected User user;
 
-  protected double balance; // TODO: change to BigDecimal
+  protected double balance;
 
   public void deposit(double amount) throws InvalidDepositException {
 
