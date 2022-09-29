@@ -6,14 +6,14 @@
 # Simplebank 
 This project is a backend application that provides an API to store basic bank accounts and users that can access them via authentication and authorization. 
 
-##Technologies used:
+## Technologies used:
 + Java 11
 + Maven
 + Spring Boot
 + Junit and Mockito
 + Lombok
 
-###Instructions for local testing and development:
+### Instructions for local testing and development:
 Donwload and configure Java 11 JDK and maven to work with your favorite IDE. 
 Clone this repository, open the project in IDE and download pom.xml dependencies. To run and debug the app and its unit tests, make sure to add the required environment variables that are in the application.properties file regarding database configuration for test and production environments.
 
