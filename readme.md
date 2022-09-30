@@ -14,26 +14,22 @@ This project is a backend application that provides an API to store basic bank a
 + Lombok
 
 ### Instructions for local testing and development:
-Donwload and configure Java 11 JDK and maven to work with your favorite IDE. 
-Clone this repository, open the project in IDE and download pom.xml dependencies. To run and debug the app and its unit tests, make sure to add the required environment variables that are in the application.properties file regarding database configuration for test and production environments.
+Install Java 11( JDK+JRE) and maven in your machine, run the following commands to run tests and then start the Application using the test profile, which uses an in-memory database (H2) 
 
-### Environment Variables:
-Set the following variables to configure token generation:
+```bash
+git clone https://github.com/carol-ao/simplebank.git
+cd simplebank
+mvn -DPROFILE=test clean install
+java -jar target/simplebank-0.0.1-SNAPSHOT.JAR
+```
 
-+ JWT_SECRET=JLQ3yFGL6X2R0u5meISHRirMiDIl7ZYlkKxHHyPm6XhqQNTLhC (example)
-+ JWT_DURATION=86400000  (example)
-
-To use an in-memory bank for testing, set the following variable:
-+ PROFILE=test
-
-If you want to use a Postgres Database (suggestion for production environment):
-+ PROFILE=production
-
-then set the following variables as well:
+If you'd like to use another database, like Postgres, you do this process with PROFILE variable set to production and set a few more environment variables like bellow:
 + POSTGRES_PASSWORD=<YOUR_POSTGRES_PASSWORD> 
 + POSTGRES_USERNAME=<YOUR_POSTGRES_USERNAME>
 + POSTGRES_URL=<YOUR_DATABASE_URL>
 + SCHEMA=<YOUR_POSTGRES_SCHEMA>
+
+If you'd like to change the env. variables for the token generation (jwt.secret and jwt.duration), alter them in the application.properties file.
 
 
 Things that still have to be done:
