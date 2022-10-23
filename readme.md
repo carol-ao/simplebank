@@ -7,7 +7,7 @@
 This project is a backend application that provides an API to store basic bank accounts and users that can access them via authentication and authorization. 
 
 ## Technologies used:
-+ Java 11
++ Java 8
 + Maven
 + Spring Boot
 + Junit and Mockito
