@@ -14,7 +14,7 @@ This project is a backend application that provides an API to store basic bank a
 + Lombok
 
 ### Instructions for local testing and development:
-Install Java 11( JDK+JRE) and maven in your machine, run the following commands to run tests and then start the Application using the test profile, which uses an in-memory database (H2) 
+Install Java 8 and maven in your machine, run the following commands to run tests and then start the Application using the test profile, which uses an in-memory database (H2) 
 
 ```bash
 git clone https://github.com/carol-ao/simplebank.git
